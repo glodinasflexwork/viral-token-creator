@@ -12,6 +12,9 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['5173-iave8a8bqqk4jopg78c42-816e7b7d.manusvm.computer'],
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

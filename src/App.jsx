@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useWallet, useConnection } from '@solana/wallet-adapter-react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Input } from '@/components/ui/input.jsx'
@@ -12,30 +13,33 @@ import { Alert, AlertDescription } from '@/components/ui/alert.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SolanaWalletProvider } from './components/WalletProvider.jsx'
 import { WalletConnection } from './components/WalletConnection.jsx'
+import { createToken, getConnection, checkWalletBalance } from './utils/tokenCreation.js'
 import { 
   Rocket, 
   Coins, 
-  Wallet, 
-  Settings, 
   TrendingUp, 
   Users, 
-  Globe, 
-  Twitter, 
-  MessageCircle,
-  Zap,
-  Star,
-  CheckCircle,
-  AlertCircle,
-  Copy,
-  ExternalLink,
-  Sparkles,
-  Target,
+  Share2, 
+  Zap, 
+  CheckCircle, 
+  Copy, 
+  ExternalLink, 
+  ArrowRight, 
+  ArrowLeft, 
   DollarSign,
-  BarChart3
+  Wallet,
+  AlertTriangle,
+  BarChart3,
+  Sparkles,
+  Globe,
+  Twitter,
+  MessageCircle
 } from 'lucide-react'
 import './App.css'
 
 function App() {
+  const { wallet, publicKey, connected, signTransaction } = useWallet()
+  const { connection } = useConnection()
   const [currentStep, setCurrentStep] = useState(0)
   const [tokenData, setTokenData] = useState({
     name: '',
@@ -54,6 +58,7 @@ function App() {
   const [createdToken, setCreatedToken] = useState(null)
   const [network, setNetwork] = useState('devnet')
   const [walletInfo, setWalletInfo] = useState(null)
+  const [walletBalance, setWalletBalance] = useState(null)
 
   const steps = [
     { id: 0, title: 'Token Details', icon: Coins },
@@ -101,46 +106,61 @@ function App() {
     setWalletInfo(wallet)
   }
 
+  // Check wallet balance when connected
+  useEffect(() => {
+    if (connected && publicKey && connection) {
+      checkWalletBalance(connection, publicKey).then(result => {
+        if (result.success) {
+          setWalletBalance(result.balance)
+        }
+      })
+    } else {
+      setWalletBalance(null)
+    }
+  }, [connected, publicKey, connection])
+
   const handleCreateToken = async () => {
+    if (!connected || !publicKey || !signTransaction) {
+      alert('Please connect your wallet first')
+      return
+    }
+
+    if (walletBalance !== null && walletBalance < 0.01) {
+      alert('Insufficient SOL balance. You need at least 0.01 SOL for transaction fees.')
+      return
+    }
+
     setIsCreating(true)
     
     try {
-      const response = await fetch('/api/token/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...tokenData,
-          network: network
-        })
-      })
+      // Use the network-specific connection
+      const networkConnection = getConnection(network)
       
-      const result = await response.json()
+      // Create wallet object for token creation
+      const walletAdapter = {
+        publicKey,
+        signTransaction
+      }
+
+      const result = await createToken(networkConnection, walletAdapter, tokenData)
       
       if (result.success) {
-        setCreatedToken(result)
+        // Add network and explorer URL with correct cluster
+        const explorerUrl = network === 'devnet' 
+          ? `${result.explorerUrl}?cluster=devnet`
+          : result.explorerUrl
+          
+        setCreatedToken({
+          ...result,
+          explorerUrl,
+          network
+        })
       } else {
-        console.error('Token creation failed:', result.error)
-        // Fallback to mock data for demo
-        const mockToken = {
-          mintAddress: '9Nx69waRJRQaxeroFBLZHvAbHxeLVrdxKxydM7Wre3VM',
-          explorerUrl: `https://explorer.solana.com/address/9Nx69waRJRQaxeroFBLZHvAbHxeLVrdxKxydM7Wre3VM${network === 'devnet' ? '?cluster=devnet' : ''}`,
-          signature: '39U4P42DkeWQoai9d4iN1R4Bt5KbD8n3cpjWz7BLGcYFeqaKGDcoK7sFMPUYXKbr5hwJHk5fqpUrUkNGo69fyZAW',
-          network: network
-        }
-        setCreatedToken(mockToken)
+        alert(`Token creation failed: ${result.error}`)
       }
     } catch (error) {
-      console.error('API call failed:', error)
-      // Fallback to mock data for demo
-      const mockToken = {
-        mintAddress: '9Nx69waRJRQaxeroFBLZHvAbHxeLVrdxKxydM7Wre3VM',
-        explorerUrl: `https://explorer.solana.com/address/9Nx69waRJRQaxeroFBLZHvAbHxeLVrdxKxydM7Wre3VM${network === 'devnet' ? '?cluster=devnet' : ''}`,
-        signature: '39U4P42DkeWQoai9d4iN1R4Bt5KbD8n3cpjWz7BLGcYFeqaKGDcoK7sFMPUYXKbr5hwJHk5fqpUrUkNGo69fyZAW',
-        network: network
-      }
-      setCreatedToken(mockToken)
+      console.error('Token creation error:', error)
+      alert(`Token creation failed: ${error.message}`)
     }
     
     setIsCreating(false)
@@ -171,11 +191,8 @@ function App() {
       case 2:
         return true // Social links are optional
       case 3:
-        // For mainnet, require wallet connection
-        if (network === 'mainnet') {
-          return walletInfo && walletInfo.connected
-        }
-        return true
+        // Require wallet connection for both devnet and mainnet
+        return connected && publicKey
       default:
         return false
     }
@@ -519,6 +536,14 @@ function App() {
                         <DollarSign className="h-4 w-4" />
                         <AlertDescription>
                           <strong>Deployment Cost:</strong> {network === 'devnet' ? 'FREE (using devnet SOL)' : '~0.01 SOL (~$2-4 USD)'}
+                          {connected && walletBalance !== null && (
+                            <div className="mt-2">
+                              <strong>Your Balance:</strong> {walletBalance.toFixed(4)} SOL
+                              {walletBalance < 0.01 && (
+                                <span className="text-red-500 ml-2">⚠️ Insufficient balance</span>
+                              )}
+                            </div>
+                          )}
                         </AlertDescription>
                       </Alert>
 
@@ -531,13 +556,23 @@ function App() {
                       {/* Deploy Button */}
                       <Button 
                         onClick={handleCreateToken}
-                        disabled={isCreating || (network === 'mainnet' && (!walletInfo || !walletInfo.connected))}
+                        disabled={isCreating || !connected || !publicKey || (walletBalance !== null && walletBalance < 0.01)}
                         className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                       >
                         {isCreating ? (
                           <div className="flex items-center space-x-2">
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             <span>Creating Token...</span>
+                          </div>
+                        ) : !connected ? (
+                          <div className="flex items-center space-x-2">
+                            <Wallet className="w-5 h-5" />
+                            <span>Connect Wallet First</span>
+                          </div>
+                        ) : walletBalance !== null && walletBalance < 0.01 ? (
+                          <div className="flex items-center space-x-2">
+                            <AlertTriangle className="w-5 h-5" />
+                            <span>Insufficient SOL Balance</span>
                           </div>
                         ) : (
                           <div className="flex items-center space-x-2">

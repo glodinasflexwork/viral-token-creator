@@ -28,12 +28,76 @@ export const WalletConnection = ({ network, onWalletConnected }) => {
 
     if (network === 'devnet') {
         return (
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                    <strong>Devnet Mode:</strong> No wallet connection needed. Using free devnet SOL for testing.
-                </AlertDescription>
-            </Alert>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                        <Wallet className="w-5 h-5" />
+                        <span>Connect Solana Wallet (Devnet)</span>
+                    </CardTitle>
+                    <CardDescription>
+                        Connect your Phantom wallet to create tokens on devnet. Make sure you have devnet SOL for transaction fees.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {!connected ? (
+                        <div className="space-y-4">
+                            <div className="flex justify-center">
+                                <WalletMultiButton className="!bg-purple-500 hover:!bg-purple-600 !rounded-lg !px-6 !py-3 !text-white !font-medium !transition-colors" />
+                            </div>
+                            
+                            <Alert>
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                    <strong>Devnet Mode:</strong> You'll need devnet SOL in your wallet. Get free devnet SOL from{' '}
+                                    <a href="https://faucet.solana.com" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">
+                                        faucet.solana.com
+                                    </a>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="flex items-center space-x-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <div>
+                                        <p className="font-medium text-green-800 dark:text-green-200">
+                                            Wallet Connected (Devnet)
+                                        </p>
+                                        <p className="text-sm text-green-600 dark:text-green-300">
+                                            {wallet?.adapter?.name} • {publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        const explorerUrl = `https://explorer.solana.com/address/${publicKey?.toString()}?cluster=devnet`;
+                                        window.open(explorerUrl, '_blank');
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    View
+                                </Button>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <WalletDisconnectButton className="!bg-gray-500 hover:!bg-gray-600 !rounded-lg !px-4 !py-2 !text-white !font-medium !transition-colors" />
+                            </div>
+                        </div>
+                    )}
+
+                    {connecting && (
+                        <div className="text-center">
+                            <div className="inline-flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-sm text-muted-foreground">Connecting wallet...</span>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         );
     }
 
