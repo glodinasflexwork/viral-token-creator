@@ -1,35 +1,29 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { Button } from '@/components/ui/button.jsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
-import { Input } from '@/components/ui/input.jsx'
-import { Label } from '@/components/ui/label.jsx'
-import { Textarea } from '@/components/ui/textarea.jsx'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx'
-import { Badge } from '@/components/ui/badge.jsx'
-import { Progress } from '@/components/ui/progress.jsx'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.jsx'
-import { Alert, AlertDescription } from '@/components/ui/alert.jsx'
-import { motion, AnimatePresence } from 'framer-motion'
 import { SolanaWalletProvider } from './components/WalletProvider.jsx'
 import { WalletConnection } from './components/WalletConnection.jsx'
 import { createToken, getConnection, checkWalletBalance } from './utils/tokenCreation.js'
-import { 
-  Rocket, 
-  Coins, 
-  TrendingUp, 
-  Users, 
-  Share2, 
-  Zap, 
-  CheckCircle, 
-  Copy, 
-  ExternalLink, 
-  ArrowRight, 
-  ArrowLeft, 
+import { Button } from '@/components/ui/button.jsx'
+import { Input } from '@/components/ui/input.jsx'
+import { Label } from '@/components/ui/label.jsx'
+import { Textarea } from '@/components/ui/textarea.jsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
+import { Badge } from '@/components/ui/badge.jsx'
+import { Alert, AlertDescription } from '@/components/ui/alert.jsx'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Coins,
+  TrendingUp,
+  Users,
+  Rocket,
+  CheckCircle,
+  Copy,
+  ExternalLink,
   DollarSign,
   Wallet,
   AlertTriangle,
-  BarChart3,
+  Check,
   Sparkles,
   Globe,
   Twitter,
@@ -37,7 +31,7 @@ import {
 } from 'lucide-react'
 import './App.css'
 
-function App() {
+function AppContent() {
   const { wallet, publicKey, connected, signTransaction } = useWallet()
   const { connection } = useConnection()
   const [currentStep, setCurrentStep] = useState(0)
@@ -79,18 +73,33 @@ function App() {
   const viralFeatureOptions = [
     'Community-driven growth',
     'Meme-powered marketing',
-    'Viral social media campaigns',
-    'Decentralized governance',
-    'NFT integration',
+    'Influencer partnerships',
     'Gaming utility',
+    'NFT integration',
     'DeFi yield farming',
-    'Celebrity endorsements',
-    'Charity donations',
-    'Environmental focus'
+    'Viral social media campaigns',
+    'Decentralized governance'
   ]
 
+  // Check wallet balance when connected
+  useEffect(() => {
+    if (connected && publicKey) {
+      const networkConnection = getConnection(network)
+      checkWalletBalance(networkConnection, publicKey).then(result => {
+        if (result.success) {
+          setWalletBalance(result.balance)
+        }
+      })
+    } else {
+      setWalletBalance(null)
+    }
+  }, [connected, publicKey, network])
+
   const handleInputChange = (field, value) => {
-    setTokenData(prev => ({ ...prev, [field]: value }))
+    setTokenData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const toggleViralFeature = (feature) => {
@@ -102,22 +111,9 @@ function App() {
     }))
   }
 
-  const handleWalletConnected = (wallet) => {
-    setWalletInfo(wallet)
+  const handleWalletConnected = (walletInfo) => {
+    setWalletInfo(walletInfo)
   }
-
-  // Check wallet balance when connected
-  useEffect(() => {
-    if (connected && publicKey && connection) {
-      checkWalletBalance(connection, publicKey).then(result => {
-        if (result.success) {
-          setWalletBalance(result.balance)
-        }
-      })
-    } else {
-      setWalletBalance(null)
-    }
-  }, [connected, publicKey, connection])
 
   const handleCreateToken = async () => {
     if (!connected || !publicKey || !signTransaction) {
@@ -191,7 +187,6 @@ function App() {
       case 2:
         return true // Social links are optional
       case 3:
-        // Require wallet connection for both devnet and mainnet
         return connected && publicKey
       default:
         return false
@@ -199,8 +194,7 @@ function App() {
   }
 
   return (
-    <SolanaWalletProvider network={network}>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
       {/* Header */}
       <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -248,30 +242,31 @@ function App() {
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 {steps.map((step, index) => (
-                  <div key={step.id} className="flex items-center">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
-                      index <= currentStep 
-                        ? 'bg-purple-500 border-purple-500 text-white' 
-                        : 'border-gray-300 text-gray-400'
-                    }`}>
+                  <div
+                    key={step.id}
+                    className={`flex items-center space-x-2 ${
+                      index <= currentStep ? 'text-purple-600' : 'text-gray-400'
+                    }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        index <= currentStep
+                          ? 'bg-purple-500 border-purple-500 text-white'
+                          : 'border-gray-300 text-gray-400'
+                      }`}
+                    >
                       <step.icon className="w-5 h-5" />
                     </div>
-                    <div className="ml-3 hidden sm:block">
-                      <p className={`text-sm font-medium ${
-                        index <= currentStep ? 'text-purple-600' : 'text-gray-400'
-                      }`}>
-                        {step.title}
-                      </p>
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div className={`w-16 h-0.5 mx-4 ${
-                        index < currentStep ? 'bg-purple-500' : 'bg-gray-300'
-                      }`} />
-                    )}
+                    <span className="font-medium hidden sm:block">{step.title}</span>
                   </div>
                 ))}
               </div>
-              <Progress value={(currentStep / (steps.length - 1)) * 100} className="h-2" />
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                ></div>
+              </div>
             </div>
 
             {/* Step Content */}
@@ -291,7 +286,7 @@ function App() {
                         <span>Token Details</span>
                       </CardTitle>
                       <CardDescription>
-                        Configure your token's basic information and characteristics
+                        Configure your viral token's basic information
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -300,7 +295,7 @@ function App() {
                           <Label htmlFor="name">Token Name *</Label>
                           <Input
                             id="name"
-                            placeholder="e.g., Viral Meme Coin"
+                            placeholder="e.g., Doge Killer"
                             value={tokenData.name}
                             onChange={(e) => handleInputChange('name', e.target.value)}
                           />
@@ -309,26 +304,25 @@ function App() {
                           <Label htmlFor="symbol">Symbol *</Label>
                           <Input
                             id="symbol"
-                            placeholder="e.g., VIRAL"
+                            placeholder="e.g., DOGEK"
                             value={tokenData.symbol}
                             onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                            maxLength={10}
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="description">Description *</Label>
                         <Textarea
                           id="description"
-                          placeholder="Describe your token's purpose and community..."
+                          placeholder="Describe your token's purpose and viral potential..."
                           value={tokenData.description}
                           onChange={(e) => handleInputChange('description', e.target.value)}
-                          rows={4}
+                          rows={3}
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <Label htmlFor="supply">Total Supply</Label>
                           <Input
@@ -340,31 +334,32 @@ function App() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="decimals">Decimals</Label>
-                          <Select value={tokenData.decimals} onValueChange={(value) => handleInputChange('decimals', value)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[0, 2, 6, 8, 9].map(d => (
-                                <SelectItem key={d} value={d.toString()}>{d}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input
+                            id="decimals"
+                            type="number"
+                            value={tokenData.decimals}
+                            onChange={(e) => handleInputChange('decimals', e.target.value)}
+                          />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="theme">Theme</Label>
-                          <Select value={tokenData.theme} onValueChange={(value) => handleInputChange('theme', value)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {themes.map(theme => (
-                                <SelectItem key={theme.value} value={theme.value}>
-                                  {theme.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Theme</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {themes.map((theme) => (
+                            <div
+                              key={theme.value}
+                              className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                tokenData.theme === theme.value
+                                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => handleInputChange('theme', theme.value)}
+                            >
+                              <div className="font-medium">{theme.label}</div>
+                              <div className="text-sm text-muted-foreground">{theme.description}</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </CardContent>
@@ -382,40 +377,35 @@ function App() {
                         Select features that will make your token go viral
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {viralFeatureOptions.map(feature => (
+                        {viralFeatureOptions.map((feature) => (
                           <div
                             key={feature}
-                            className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
                               tokenData.viralFeatures.includes(feature)
                                 ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                                 : 'border-gray-200 hover:border-gray-300'
                             }`}
                             onClick={() => toggleViralFeature(feature)}
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                  tokenData.viralFeatures.includes(feature)
+                                    ? 'bg-purple-500 border-purple-500'
+                                    : 'border-gray-300'
+                                }`}
+                              >
+                                {tokenData.viralFeatures.includes(feature) && (
+                                  <Check className="w-3 h-3 text-white" />
+                                )}
+                              </div>
                               <span className="font-medium">{feature}</span>
-                              {tokenData.viralFeatures.includes(feature) && (
-                                <CheckCircle className="w-5 h-5 text-purple-500" />
-                              )}
                             </div>
                           </div>
                         ))}
                       </div>
-                      
-                      {tokenData.viralFeatures.length > 0 && (
-                        <div className="mt-6">
-                          <Label>Selected Features:</Label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {tokenData.viralFeatures.map(feature => (
-                              <Badge key={feature} variant="secondary" className="bg-purple-100 text-purple-800">
-                                {feature}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -428,7 +418,7 @@ function App() {
                         <span>Social Links</span>
                       </CardTitle>
                       <CardDescription>
-                        Add your social media links to build community (optional)
+                        Add social media links to build your community
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -643,53 +633,88 @@ function App() {
                 <CheckCircle className="w-10 h-10 text-green-500" />
               </div>
               <h2 className="text-3xl font-bold mb-2">Token Created Successfully! 🎉</h2>
-              <p className="text-muted-foreground">Your viral token is now live on Solana {network}</p>
+              <p className="text-muted-foreground">
+                Your viral token has been deployed to Solana {network}
+              </p>
             </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <span className="font-medium">Mint Address:</span>
-                    <div className="flex items-center space-x-2">
-                      <code className="text-sm bg-white dark:bg-gray-700 px-2 py-1 rounded">
-                        {createdToken.mintAddress}
-                      </code>
-                      <Button size="sm" variant="ghost" onClick={() => copyToClipboard(createdToken.mintAddress)}>
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
+            <Card className="text-left">
+              <CardHeader>
+                <CardTitle>Token Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Name:</span>
+                    <span className="ml-2 font-medium">{createdToken.tokenData.name}</span>
                   </div>
-                  
-                  <div className="flex space-x-4">
-                    <Button asChild className="flex-1">
-                      <a href={createdToken.explorerUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        View on Explorer
-                      </a>
-                    </Button>
-                    <Button variant="outline" className="flex-1">
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Marketing Kit
+                  <div>
+                    <span className="text-muted-foreground">Symbol:</span>
+                    <span className="ml-2 font-medium">{createdToken.tokenData.symbol}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Network:</span>
+                    <span className="ml-2 font-medium capitalize">{createdToken.network}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Supply:</span>
+                    <span className="ml-2 font-medium">{parseInt(createdToken.tokenData.supply).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Mint Address</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={createdToken.mintAddress}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => copyToClipboard(createdToken.mintAddress)}
+                    >
+                      <Copy className="w-4 h-4" />
                     </Button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Transaction Signature</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={createdToken.signature}
+                      readOnly
+                      className="font-mono text-sm"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => copyToClipboard(createdToken.signature)}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => window.open(createdToken.explorerUrl, '_blank')}
+                    className="flex-1"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View on Explorer
+                  </Button>
+                  <Button
+                    onClick={() => copyToClipboard(createdToken.explorerUrl)}
+                    variant="outline"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="mt-8 text-left">
-              <h3 className="font-semibold mb-4">🚀 Next Steps for Viral Success:</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Share your token address on social media</li>
-                <li>• Create memes and viral content</li>
-                <li>• Build your community on Telegram/Discord</li>
-                <li>• List on DEX (Raydium, Orca, etc.)</li>
-                <li>• Partner with influencers</li>
-                <li>• Run targeted marketing campaigns</li>
-              </ul>
-            </div>
-
-            <Button 
+            <Button
               onClick={() => {
                 setCreatedToken(null)
                 setCurrentStep(0)
@@ -715,7 +740,16 @@ function App() {
           </motion.div>
         )}
       </main>
-      </div>
+    </div>
+  )
+}
+
+function App() {
+  const [network, setNetwork] = useState('devnet')
+  
+  return (
+    <SolanaWalletProvider network={network}>
+      <AppContent />
     </SolanaWalletProvider>
   )
 }
