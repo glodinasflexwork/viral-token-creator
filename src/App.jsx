@@ -554,33 +554,56 @@ function App() {
                       />
 
                       {/* Deploy Button */}
-                      <Button 
-                        onClick={handleCreateToken}
-                        disabled={isCreating || !connected || !publicKey || (walletBalance !== null && walletBalance < 0.01)}
-                        className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                      >
-                        {isCreating ? (
-                          <div className="flex items-center space-x-2">
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span>Creating Token...</span>
-                          </div>
-                        ) : !connected ? (
-                          <div className="flex items-center space-x-2">
-                            <Wallet className="w-5 h-5" />
-                            <span>Connect Wallet First</span>
-                          </div>
-                        ) : walletBalance !== null && walletBalance < 0.01 ? (
-                          <div className="flex items-center space-x-2">
-                            <AlertTriangle className="w-5 h-5" />
-                            <span>Insufficient SOL Balance</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <Rocket className="w-5 h-5" />
-                            <span>Deploy Token</span>
+                      <div className="space-y-4">
+                        {/* Debug info - remove in production */}
+                        <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+                          Debug: connected={connected ? 'true' : 'false'}, publicKey={publicKey ? 'exists' : 'null'}, balance={walletBalance}
+                        </div>
+                        
+                        <Button 
+                          onClick={handleCreateToken}
+                          disabled={isCreating || !connected || !publicKey}
+                          className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        >
+                          {isCreating ? (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Creating Token...</span>
+                            </div>
+                          ) : !connected || !publicKey ? (
+                            <div className="flex items-center space-x-2">
+                              <Wallet className="w-5 h-5" />
+                              <span>Connect Wallet First</span>
+                            </div>
+                          ) : walletBalance !== null && walletBalance < 0.01 ? (
+                            <div className="flex items-center space-x-2">
+                              <AlertTriangle className="w-5 h-5" />
+                              <span>Insufficient SOL Balance</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <Rocket className="w-5 h-5" />
+                              <span>Deploy Token</span>
+                            </div>
+                          )}
+                        </Button>
+
+                        {network === 'devnet' && (
+                          <div className="text-center">
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Need devnet SOL for testing?
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open('https://faucet.solana.com', '_blank')}
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Get Free Devnet SOL
+                            </Button>
                           </div>
                         )}
-                      </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
